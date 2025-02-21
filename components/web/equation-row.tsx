@@ -45,6 +45,7 @@ export const EquationRow = ({ equation, onDelete }: EquationRowProps) => {
       <AutoComplete
         items={allIdentifiers}
         className="min-w-[5rem] flex-[3]"
+        enforceIdentifierValidation={true}
         onInputChange={(value) => {
           setLhs(value);
           debouncedAddIdentifier();

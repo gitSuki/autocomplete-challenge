@@ -16,6 +16,7 @@ type Props = {
   placeholder?: string;
   className?: string;
   onInputChange?: (value: string) => void;
+  enforceIdentifierValidation?: boolean;
 };
 
 export function AutoComplete({
@@ -24,7 +25,10 @@ export function AutoComplete({
   placeholder = "",
   className,
   onInputChange,
+  enforceIdentifierValidation = false,
 }: Props) {
+  const IDENTIFIER_REGEX = /^[a-zA-Z_][a-zA-Z0-9_\.]*$/;
+
   const {
     isOpen,
     setIsOpen,
@@ -80,6 +84,15 @@ export function AutoComplete({
     calculateDropdownOffset(inputElement, textBeforeCursor);
   };
 
+  const validateInput = (value: string): string => {
+    if (!enforceIdentifierValidation) return value;
+    if (!value) return value;
+    if (IDENTIFIER_REGEX.test(value)) {
+      return value;
+    }
+    return inputValue;
+  };
+
   return (
     <div className={cn("flex items-center", className)}>
       <Popover
@@ -92,8 +105,11 @@ export function AutoComplete({
               asChild
               value={inputValue}
               onValueChange={(value) => {
-                setInputValue(value);
-                setIsOpen(value.length > 0 && !value.endsWith(" "));
+                const validatedValue = validateInput(value);
+                setInputValue(validatedValue);
+                setIsOpen(
+                  validatedValue.length > 0 && !validatedValue.endsWith(" ")
+                );
               }}
               onKeyDown={(e) => {
                 if (e.key === "Tab") {
