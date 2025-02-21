@@ -30,6 +30,9 @@ export function useAutocomplete(
     inputElement: HTMLInputElement,
     textBeforeCursor: string
   ) => {
+    // finds the correct position to display the autocomplete list
+    // based on the current cursor position
+    // accounts for font, size, case, etc.
     const ctx = document.createElement("canvas").getContext("2d");
     if (ctx) {
       ctx.font = window.getComputedStyle(inputElement).font;

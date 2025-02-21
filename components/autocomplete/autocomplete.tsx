@@ -10,6 +10,10 @@ import { AutoCompleteList } from "./autocomplete-list";
 import { useAutocomplete } from "@/hooks/use-autocomplete";
 import { Identifier } from "@/lib/types/identifiers";
 
+const IDENTIFIER_REGEX = /^[a-zA-Z_][a-zA-Z0-9_\.]*$/;
+const WORD_BOUNDARY_REGEX = /[a-zA-Z0-9_\.]*$/;
+const OPERATORS = [" ", "(", ")", "+", "-", "*", "/", "."];
+
 type Props = {
   items: Identifier[];
   isLoading?: boolean;
@@ -27,8 +31,6 @@ export function AutoComplete({
   onInputChange,
   enforceIdentifierValidation = false,
 }: Props) {
-  const IDENTIFIER_REGEX = /^[a-zA-Z_][a-zA-Z0-9_\.]*$/;
-
   const {
     isOpen,
     setIsOpen,
@@ -46,8 +48,11 @@ export function AutoComplete({
 
   const onSelectItem = (selectedItem: string) => {
     const textBeforeCursor = inputValue.substring(0, cursorPosition);
-    const lastSpaceIndex = textBeforeCursor.lastIndexOf(" ");
-    const startOfWordToFilter = lastSpaceIndex === -1 ? 0 : lastSpaceIndex + 1;
+    const match = textBeforeCursor.match(WORD_BOUNDARY_REGEX);
+    const startOfWordToFilter = match
+      ? cursorPosition - match[0].length
+      : cursorPosition;
+
     const newValue =
       inputValue.substring(0, startOfWordToFilter) +
       selectedItem +
@@ -74,13 +79,12 @@ export function AutoComplete({
     const inputElement = e.target as HTMLInputElement;
     const cursorPos = inputElement.selectionStart || 0;
     const textBeforeCursor = inputValue.substring(0, cursorPos);
-    const currentWordUpToCursor = textBeforeCursor.split(/\s+/).pop() || "";
+
+    const currentWordUpToCursor =
+      textBeforeCursor.match(WORD_BOUNDARY_REGEX)?.[0] || "";
+
     setWordToFilter(currentWordUpToCursor);
     setCursorPosition(cursorPos);
-
-    // finds the correct position to display the autocomplete list
-    // based on the current cursor position
-    // accounts for font, size, case, etc.
     calculateDropdownOffset(inputElement, textBeforeCursor);
   };
 
@@ -108,7 +112,8 @@ export function AutoComplete({
                 const validatedValue = validateInput(value);
                 setInputValue(validatedValue);
                 setIsOpen(
-                  validatedValue.length > 0 && !validatedValue.endsWith(" ")
+                  validatedValue.length > 0 &&
+                    !OPERATORS.some((op) => validatedValue.endsWith(op))
                 );
               }}
               onKeyDown={(e) => {
